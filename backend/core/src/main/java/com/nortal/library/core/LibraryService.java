@@ -4,11 +4,17 @@ import com.nortal.library.core.domain.Book;
 import com.nortal.library.core.domain.Member;
 import com.nortal.library.core.port.BookRepository;
 import com.nortal.library.core.port.MemberRepository;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Service
+@RequiredArgsConstructor
 public class LibraryService {
   private static final int MAX_LOANS = 5;
   private static final int DEFAULT_LOAN_DAYS = 14;
@@ -16,11 +22,7 @@ public class LibraryService {
   private final BookRepository bookRepository;
   private final MemberRepository memberRepository;
 
-  public LibraryService(BookRepository bookRepository, MemberRepository memberRepository) {
-    this.bookRepository = bookRepository;
-    this.memberRepository = memberRepository;
-  }
-
+ @Transactional
   public Result borrowBook(String bookId, String memberId) {
     Optional<Book> book = bookRepository.findById(bookId);
     if (book.isEmpty()) {
@@ -39,6 +41,7 @@ public class LibraryService {
     return Result.success();
   }
 
+ @Transactional
   public ResultWithNext returnBook(String bookId) {
     Optional<Book> book = bookRepository.findById(bookId);
     if (book.isEmpty()) {
@@ -54,6 +57,7 @@ public class LibraryService {
     return ResultWithNext.success(nextMember);
   }
 
+ @Transactional
   public Result reserveBook(String bookId, String memberId) {
     Optional<Book> book = bookRepository.findById(bookId);
     if (book.isEmpty()) {
@@ -69,6 +73,7 @@ public class LibraryService {
     return Result.success();
   }
 
+ @Transactional
   public Result cancelReservation(String bookId, String memberId) {
     Optional<Book> book = bookRepository.findById(bookId);
     if (book.isEmpty()) {
@@ -121,6 +126,7 @@ public class LibraryService {
         .toList();
   }
 
+ @Transactional
   public Result extendLoan(String bookId, int days) {
     if (days == 0) {
       return Result.failure("INVALID_EXTENSION");
@@ -173,6 +179,7 @@ public class LibraryService {
     return memberRepository.findAll();
   }
 
+ @Transactional
   public Result createBook(String id, String title) {
     if (id == null || title == null) {
       return Result.failure("INVALID_REQUEST");
@@ -181,6 +188,7 @@ public class LibraryService {
     return Result.success();
   }
 
+ @Transactional
   public Result updateBook(String id, String title) {
     Optional<Book> existing = bookRepository.findById(id);
     if (existing.isEmpty()) {
@@ -195,6 +203,7 @@ public class LibraryService {
     return Result.success();
   }
 
+ @Transactional
   public Result deleteBook(String id) {
     Optional<Book> existing = bookRepository.findById(id);
     if (existing.isEmpty()) {
@@ -205,6 +214,7 @@ public class LibraryService {
     return Result.success();
   }
 
+ @Transactional
   public Result createMember(String id, String name) {
     if (id == null || name == null) {
       return Result.failure("INVALID_REQUEST");
@@ -213,6 +223,7 @@ public class LibraryService {
     return Result.success();
   }
 
+ @Transactional
   public Result updateMember(String id, String name) {
     Optional<Member> existing = memberRepository.findById(id);
     if (existing.isEmpty()) {
@@ -227,6 +238,7 @@ public class LibraryService {
     return Result.success();
   }
 
+ @Transactional
   public Result deleteMember(String id) {
     Optional<Member> existing = memberRepository.findById(id);
     if (existing.isEmpty()) {
