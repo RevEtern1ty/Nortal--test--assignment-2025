@@ -40,4 +40,10 @@ public class BookRepositoryAdapter implements BookRepository {
   public boolean existsById(String id) {
     return jpaRepository.existsById(id);
   }
+
+  @Override
+  public int countLoanedTo(String memberId) {
+    return jpaRepository.countByLoanedTo(memberId);
+  }
 }
+
