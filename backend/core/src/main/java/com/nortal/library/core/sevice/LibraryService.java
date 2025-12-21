@@ -42,48 +42,6 @@ public class LibraryService {
     return Result.success();
   }
 
-    private boolean bookNotFound(String bookId) {
-        return bookRepository.findById(bookId).isEmpty();
-  }
-
-  private boolean memberNotFound(String memberId){
-     return !memberRepository.existsById(memberId);
-  }
-
-  private boolean isAlreadyLoaned (Book book){
-     return book.getLoanedTo() != null;
-  }
-
-  private boolean isQueueViolation (Book book,String memberId){
-
-     // Checks  whether the member is violating the reservation queue rules
-      // Returns true if queue is not empty and also the member is not at the front
-
-     List<String> queue = book.getReservationQueue();
-     return !queue.isEmpty() && !queue.getFirst().equals(memberId);
-  }
-
-  private boolean hasReachedLoanLimit(String memberId){
-
-      // Returns true if the member has reached or exceeded the maximum allowed number of active book loans.
-        // Uses a custom @Query method to count how many books are currently loaned to the member.
-
-     return bookRepository.countLoanedTo(memberId) >= MAX_LOANS;
-  }
-
-  private void loanBookToMember(Book book,String memderId){
-
-      // Assigns the book to the member, sets the due date,
-        // removes the member from the reservation queue, and saves the changes.
-
-     book.setLoanedTo(memderId);
-     book.setDueDate(LocalDate.now().plusDays(DEFAULT_LOAN_DAYS));
-     book.getReservationQueue().remove(memderId);
-     bookRepository.save(book);
-  }
-
-
-
  @Transactional
   public ResultWithNext returnBook(String bookId) {
     Optional<Book> book = bookRepository.findById(bookId);
@@ -292,29 +250,69 @@ public class LibraryService {
   }
 
   public record Result(boolean ok, String reason) {
-    public static Result success() {
+
+      public static Result success() {
       return new Result(true, null);
     }
-
     public static Result failure(String reason) {
       return new Result(false, reason);
     }
-  }
 
+  }
   public record ResultWithNext(boolean ok, String nextMemberId) {
-    public static ResultWithNext success(String nextMemberId) {
+
+      public static ResultWithNext success(String nextMemberId) {
       return new ResultWithNext(true, nextMemberId);
     }
-
     public static ResultWithNext failure() {
       return new ResultWithNext(false, null);
     }
+
   }
-
   public record MemberSummary(
-      boolean ok, String reason, List<Book> loans, List<ReservationPosition> reservations) {}
 
+    boolean ok, String reason, List<Book> loans, List<ReservationPosition> reservations) {}
   public record ReservationPosition(String bookId, int position) {}
+
+    private boolean bookNotFound(String bookId) {
+        return bookRepository.findById(bookId).isEmpty();
+    }
+
+    private boolean memberNotFound(String memberId){
+        return !memberRepository.existsById(memberId);
+    }
+
+    private boolean isAlreadyLoaned (Book book){
+        return book.getLoanedTo() != null;
+    }
+
+    private boolean isQueueViolation (Book book,String memberId){
+
+        // Checks  whether the member is violating the reservation queue rules
+        // Returns true if queue is not empty and also the member is not at the front
+
+        List<String> queue = book.getReservationQueue();
+        return !queue.isEmpty() && !queue.getFirst().equals(memberId);
+    }
+
+    private boolean hasReachedLoanLimit(String memberId){
+
+        // Returns true if the member has reached or exceeded the maximum allowed number of active book loans.
+        // Uses a custom @Query method to count how many books are currently loaned to the member.
+
+        return bookRepository.countLoanedTo(memberId) >= MAX_LOANS;
+    }
+
+    private void loanBookToMember(Book book,String memderId){
+
+        // Assigns the book to the member, sets the due date,
+        // removes the member from the reservation queue, and saves the changes.
+
+        book.setLoanedTo(memderId);
+        book.setDueDate(LocalDate.now().plusDays(DEFAULT_LOAN_DAYS));
+        book.getReservationQueue().remove(memderId);
+        bookRepository.save(book);
+    }
 }
 
 
