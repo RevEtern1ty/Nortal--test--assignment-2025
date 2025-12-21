@@ -6,7 +6,7 @@ import com.nortal.library.api.dto.CreateBookRequest;
 import com.nortal.library.api.dto.DeleteBookRequest;
 import com.nortal.library.api.dto.ResultResponse;
 import com.nortal.library.api.dto.UpdateBookRequest;
-import com.nortal.library.core.LibraryService;
+import com.nortal.library.core.sevice.LibraryService;
 import com.nortal.library.core.domain.Book;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;

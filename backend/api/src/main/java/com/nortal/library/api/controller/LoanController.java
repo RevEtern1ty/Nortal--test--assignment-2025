@@ -9,7 +9,7 @@ import com.nortal.library.api.dto.ReserveRequest;
 import com.nortal.library.api.dto.ResultResponse;
 import com.nortal.library.api.dto.ResultWithNextResponse;
 import com.nortal.library.api.dto.ReturnRequest;
-import com.nortal.library.core.LibraryService;
+import com.nortal.library.core.sevice.LibraryService;
 import com.nortal.library.core.domain.Book;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
