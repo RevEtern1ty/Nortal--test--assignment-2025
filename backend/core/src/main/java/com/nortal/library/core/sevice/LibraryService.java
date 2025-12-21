@@ -8,11 +8,12 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import javax.security.auth.callback.LanguageCallback;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static com.nortal.library.core.enums.ErrorReason.*;
 
 @Service
 @RequiredArgsConstructor
@@ -25,25 +26,24 @@ public class LibraryService {
 
  @Transactional
   public Result borrowBook(String bookId, String memberId) {
-    Optional<Book> book = bookRepository.findById(bookId);
-    if (book.isEmpty()) {
-      return Result.failure("BOOK_NOT_FOUND");
-    }
-    if (!memberRepository.existsById(memberId)) {
-      return Result.failure("MEMBER_NOT_FOUND");
-    }
-    if (!canMemberBorrow(memberId)) {
-      return Result.failure("BORROW_LIMIT");
-    }
-    Book entity = book.get();
-    entity.setLoanedTo(memberId);
-    entity.setDueDate(LocalDate.now().plusDays(DEFAULT_LOAN_DAYS));
-    bookRepository.save(entity);
+     // Check if the book and member exists
+     if (bookNotFound(bookId)) return Result.failure(BOOK_NOT_FOUND.name());
+     if (memberNotFound(memberId)) return Result.failure(MEMBER_NOT_FOUND.name());
+
+     Book book = bookRepository.findById(bookId).get();  // Safe because existence was checked above
+
+     // Loan validation
+     if (isAlreadyLoaned(book)) return Result.failure(ALREADY_LOANED.name());
+     if (isQueueViolation(book,memberId)) return Result.failure(NOT_FIRST_IN_QUEUE.name());
+     if (hasReachedLoanLimit(memberId)) return  Result.failure(BORROW_LIMIT.name());
+
+     // Assign the book to the member and saves changes
+     loanBookToMember(book,memberId);
     return Result.success();
   }
 
-  private boolean bookNotFound(String bookId){
-     return bookRepository.findById(bookId).isEmpty();
+    private boolean bookNotFound(String bookId) {
+        return bookRepository.findById(bookId).isEmpty();
   }
 
   private boolean memberNotFound(String memberId){
@@ -316,3 +316,5 @@ public class LibraryService {
 
   public record ReservationPosition(String bookId, int position) {}
 }
+
+

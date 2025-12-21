@@ -10,5 +10,6 @@ public enum ErrorReason {
     ALREADY_RESERVED,
     NOT_LOANED,
     INVALID_EXTENSION,
-    NOT_RESERVED
+    NOT_RESERVED,
+    NOT_FIRST_IN_QUEUE
 }
