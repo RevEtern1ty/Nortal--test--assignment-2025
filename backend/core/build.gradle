@@ -3,9 +3,16 @@ plugins {
 }
 
 dependencies {
+    implementation libs.spring.context
+
     implementation libs.jakarta.persistence
     implementation libs.jakarta.validation
 
     compileOnly libs.lombok
     annotationProcessor libs.lombok
+
+    implementation libs.jakarta.transaction
+
+    testImplementation libs.mockito.core
+    testImplementation libs.mockito.junit.jupiter
 }

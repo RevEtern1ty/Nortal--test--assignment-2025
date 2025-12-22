@@ -7,8 +7,15 @@ caffeine = "3.1.8"
 p6spy = "1.9.0"
 lombok = "1.18.32"
 junit-jupiter = "5.11.0"
+jakarta-transaction = "2.0.1"
+mockito = "5.9.0"
+spring = "6.1.2"
 
 [libraries]
+spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+jakarta-transaction = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "jakarta-transaction" }
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
