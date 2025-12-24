@@ -13,8 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static com.nortal.library.core.enums.ErrorReason.ALREADY_LOANED;
-import static com.nortal.library.core.enums.ErrorReason.MEMBER_NOT_FOUND;
+import static com.nortal.library.core.enums.ErrorReason.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -43,7 +42,7 @@ import static org.mockito.Mockito.*;
         LibraryService.Result result = libraryService.borrowBook(BOOK_ID,MEMBER_ID);
 
         assertFalse(result.ok());
-        assertEquals(MEMBER_NOT_FOUND.name(),result.reason());
+        assertEquals(BOOK_NOT_FOUND.name(),result.reason());
     }
 
     @Test
@@ -82,7 +81,7 @@ import static org.mockito.Mockito.*;
         LibraryService.Result result = libraryService.borrowBook(BOOK_ID,MEMBER_ID);
 
         assertTrue(result.ok());
-        verify(bookRepository.save(any(Book.class)));
+        verify(bookRepository).save(any(Book.class));
         assertEquals(MEMBER_ID,book.getLoanedTo());
         assertNotNull(book.getDueDate());
 

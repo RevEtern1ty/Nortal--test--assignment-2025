@@ -11,9 +11,11 @@ jakarta-transaction = "2.0.1"
 mockito = "5.9.0"
 spring = "6.1.2"
 bytebuddy-agent = "1.14.12"
+junit-platform-launcher = "1.10.1"
 
 
 [libraries]
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform-launcher" }
 byte-buddy-agent = { module = "net.bytebuddy:byte-buddy-agent", version.ref = "bytebuddy-agent" }
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }

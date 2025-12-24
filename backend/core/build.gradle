@@ -17,4 +17,5 @@ dependencies {
     testImplementation libs.mockito.junit.jupiter
 
     testImplementation libs.byte.buddy.agent
+    testImplementation libs.junit.platform.launcher
 }
