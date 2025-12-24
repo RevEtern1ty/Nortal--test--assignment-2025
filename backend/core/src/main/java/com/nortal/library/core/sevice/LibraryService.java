@@ -9,8 +9,10 @@ import com.nortal.library.core.port.MemberRepository;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -43,18 +45,28 @@ public class LibraryService {
 
   @Transactional
   public ResultWithNext returnBook(String bookId) {
-    Optional<Book> book = bookRepository.findById(bookId);
-    if (book.isEmpty()) {
+    // Check if the book
+    if (bookNotFound(bookId)) return ResultWithNext.failure();
+
+    Book book = bookRepository.findById(bookId).get(); // Safe because existence was checked above
+
+    // Validate that the book was returned by current borrower
+    String currentBorrower = book.getLoanedTo();
+    if (currentBorrower == null || !memberRepository.existsById(currentBorrower)) {
       return ResultWithNext.failure();
     }
+    releaseBookFromMember(book);
 
-    Book entity = book.get();
-    entity.setLoanedTo(null);
-    entity.setDueDate(null);
-    String nextMember =
-        entity.getReservationQueue().isEmpty() ? null : entity.getReservationQueue().get(0);
-    bookRepository.save(entity);
-    return ResultWithNext.success(nextMember);
+    // If reservation queue exists, try handing the book to the next valid reserver
+    if(hasReservationQueue(book)){
+      String next = nextValidatedReserver(book);
+      if (next != null){
+        loanBookToMember(book,next);
+        return ResultWithNext.success(next); // return with info on who got the book next
+      }
+    }
+    bookRepository.save(book);
+    return ResultWithNext.success(null); // success, but no next borrower
   }
 
   @Transactional
@@ -244,8 +256,8 @@ public class LibraryService {
     public static Result failure(String reason) {
       return new Result(false, reason);
     }
-  }
 
+  }
   public record ResultWithNext(boolean ok, String nextMemberId) {
 
     public static ResultWithNext success(String nextMemberId) {
@@ -255,18 +267,18 @@ public class LibraryService {
     public static ResultWithNext failure() {
       return new ResultWithNext(false, null);
     }
-  }
 
+  }
   public record MemberSummary(
       boolean ok, String reason, List<Book> loans, List<ReservationPosition> reservations) {}
 
   public record ReservationPosition(String bookId, int position) {}
 
   // 1. borrowBook helpers
+
   private boolean bookNotFound(String bookId) {
     return bookRepository.findById(bookId).isEmpty();
   }
-
   private boolean memberNotFound(String memberId) {
     return !memberRepository.existsById(memberId);
   }
@@ -302,5 +314,30 @@ public class LibraryService {
     book.setDueDate(LocalDate.now().plusDays(DEFAULT_LOAN_DAYS));
     book.getReservationQueue().remove(memderId);
     bookRepository.save(book);
+  }
+
+  // 2. returnBook helper methods
+
+  private void releaseBookFromMember(Book book){
+    book.setLoanedTo(null);
+    book.setDueDate(null);
+  }
+  private boolean hasReservationQueue (Book book){
+    return !book.getReservationQueue().isEmpty();
+  }
+  private String nextValidatedReserver (Book book){
+    Iterator<String> iterator = book.getReservationQueue().iterator();
+    while (iterator.hasNext()){
+      String candidate = iterator.next();
+      if (!memberRepository.existsById(candidate)){
+        iterator.remove();
+        continue;
+      }
+      if (hasReachedLoanLimit(candidate)) continue;
+
+      iterator.remove(); // When reseved -remove from queue
+      return candidate;
+    }
+    return null;
   }
 }
