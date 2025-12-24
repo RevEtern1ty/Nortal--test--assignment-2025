@@ -1,19 +1,18 @@
 package com.nortal.library.core.sevice;
 
+import static com.nortal.library.core.enums.ErrorReason.*;
+
 import com.nortal.library.core.domain.Book;
 import com.nortal.library.core.domain.Member;
 import com.nortal.library.core.port.BookRepository;
 import com.nortal.library.core.port.MemberRepository;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static com.nortal.library.core.enums.ErrorReason.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -24,25 +23,25 @@ public class LibraryService {
   private final BookRepository bookRepository;
   private final MemberRepository memberRepository;
 
- @Transactional
+  @Transactional
   public Result borrowBook(String bookId, String memberId) {
-     // Check if the book and member exists
-     if (bookNotFound(bookId)) return Result.failure(BOOK_NOT_FOUND.name());
-     if (memberNotFound(memberId)) return Result.failure(MEMBER_NOT_FOUND.name());
+    // Check if the book and member exists
+    if (bookNotFound(bookId)) return Result.failure(BOOK_NOT_FOUND.name());
+    if (memberNotFound(memberId)) return Result.failure(MEMBER_NOT_FOUND.name());
 
-     Book book = bookRepository.findById(bookId).get();  // Safe because existence was checked above
+    Book book = bookRepository.findById(bookId).get(); // Safe because existence was checked above
 
-     // Loan validation
-     if (isAlreadyLoaned(book)) return Result.failure(ALREADY_LOANED.name());
-     if (isQueueViolation(book,memberId)) return Result.failure(NOT_FIRST_IN_QUEUE.name());
-     if (hasReachedLoanLimit(memberId)) return  Result.failure(BORROW_LIMIT.name());
+    // Loan validation
+    if (isAlreadyLoaned(book)) return Result.failure(ALREADY_LOANED.name());
+    if (isQueueViolation(book, memberId)) return Result.failure(NOT_FIRST_IN_QUEUE.name());
+    if (hasReachedLoanLimit(memberId)) return Result.failure(BORROW_LIMIT.name());
 
-     // Assign the book to the member and saves changes
-     loanBookToMember(book,memberId);
+    // Assign the book to the member and saves changes
+    loanBookToMember(book, memberId);
     return Result.success();
   }
 
- @Transactional
+  @Transactional
   public ResultWithNext returnBook(String bookId) {
     Optional<Book> book = bookRepository.findById(bookId);
     if (book.isEmpty()) {
@@ -58,7 +57,7 @@ public class LibraryService {
     return ResultWithNext.success(nextMember);
   }
 
- @Transactional
+  @Transactional
   public Result reserveBook(String bookId, String memberId) {
     Optional<Book> book = bookRepository.findById(bookId);
     if (book.isEmpty()) {
@@ -74,7 +73,7 @@ public class LibraryService {
     return Result.success();
   }
 
- @Transactional
+  @Transactional
   public Result cancelReservation(String bookId, String memberId) {
     Optional<Book> book = bookRepository.findById(bookId);
     if (book.isEmpty()) {
@@ -114,7 +113,7 @@ public class LibraryService {
         .toList();
   }
 
- @Transactional
+  @Transactional
   public Result extendLoan(String bookId, int days) {
     if (days == 0) {
       return Result.failure("INVALID_EXTENSION");
@@ -167,7 +166,7 @@ public class LibraryService {
     return memberRepository.findAll();
   }
 
- @Transactional
+  @Transactional
   public Result createBook(String id, String title) {
     if (id == null || title == null) {
       return Result.failure("INVALID_REQUEST");
@@ -176,7 +175,7 @@ public class LibraryService {
     return Result.success();
   }
 
- @Transactional
+  @Transactional
   public Result updateBook(String id, String title) {
     Optional<Book> existing = bookRepository.findById(id);
     if (existing.isEmpty()) {
@@ -191,7 +190,7 @@ public class LibraryService {
     return Result.success();
   }
 
- @Transactional
+  @Transactional
   public Result deleteBook(String id) {
     Optional<Book> existing = bookRepository.findById(id);
     if (existing.isEmpty()) {
@@ -202,7 +201,7 @@ public class LibraryService {
     return Result.success();
   }
 
- @Transactional
+  @Transactional
   public Result createMember(String id, String name) {
     if (id == null || name == null) {
       return Result.failure("INVALID_REQUEST");
@@ -211,7 +210,7 @@ public class LibraryService {
     return Result.success();
   }
 
- @Transactional
+  @Transactional
   public Result updateMember(String id, String name) {
     Optional<Member> existing = memberRepository.findById(id);
     if (existing.isEmpty()) {
@@ -226,7 +225,7 @@ public class LibraryService {
     return Result.success();
   }
 
- @Transactional
+  @Transactional
   public Result deleteMember(String id) {
     Optional<Member> existing = memberRepository.findById(id);
     if (existing.isEmpty()) {
@@ -238,70 +237,70 @@ public class LibraryService {
 
   public record Result(boolean ok, String reason) {
 
-      public static Result success() {
+    public static Result success() {
       return new Result(true, null);
     }
+
     public static Result failure(String reason) {
       return new Result(false, reason);
     }
-
   }
+
   public record ResultWithNext(boolean ok, String nextMemberId) {
 
-      public static ResultWithNext success(String nextMemberId) {
+    public static ResultWithNext success(String nextMemberId) {
       return new ResultWithNext(true, nextMemberId);
     }
+
     public static ResultWithNext failure() {
       return new ResultWithNext(false, null);
     }
-
   }
-  public record MemberSummary(
 
-    boolean ok, String reason, List<Book> loans, List<ReservationPosition> reservations) {}
+  public record MemberSummary(
+      boolean ok, String reason, List<Book> loans, List<ReservationPosition> reservations) {}
+
   public record ReservationPosition(String bookId, int position) {}
 
-
   // 1. borrowBook helpers
-    private boolean bookNotFound(String bookId) {
-        return bookRepository.findById(bookId).isEmpty();
-    }
+  private boolean bookNotFound(String bookId) {
+    return bookRepository.findById(bookId).isEmpty();
+  }
 
-    private boolean memberNotFound(String memberId){
-        return !memberRepository.existsById(memberId);
-    }
+  private boolean memberNotFound(String memberId) {
+    return !memberRepository.existsById(memberId);
+  }
 
-    private boolean isAlreadyLoaned (Book book){
-        return book.getLoanedTo() != null;
-    }
+  private boolean isAlreadyLoaned(Book book) {
+    return book.getLoanedTo() != null;
+  }
 
-    private boolean isQueueViolation (Book book,String memberId){
+  private boolean isQueueViolation(Book book, String memberId) {
 
-        // Checks  whether the member is violating the reservation queue rules
-        // Returns true if queue is not empty and also the member is not at the front
+    // Checks  whether the member is violating the reservation queue rules
+    // Returns true if queue is not empty and also the member is not at the front
 
-        List<String> queue = book.getReservationQueue();
-        return !queue.isEmpty() && !queue.getFirst().equals(memberId);
-    }
+    List<String> queue = book.getReservationQueue();
+    return !queue.isEmpty() && !queue.getFirst().equals(memberId);
+  }
 
-    private boolean hasReachedLoanLimit(String memberId){
+  private boolean hasReachedLoanLimit(String memberId) {
 
-        // Returns true if the member has reached or exceeded the maximum allowed number of active book loans.
-        // Uses a custom @Query method to count how many books are currently loaned to the member.
+    // Returns true if the member has reached or exceeded the maximum allowed number of active book
+    // loans.
+    // Uses a custom @Query method to count how many books are currently loaned to the member.
 
-        return bookRepository.countLoanedTo(memberId) >= MAX_LOANS;
-    }
+    return bookRepository.countLoanedTo(memberId) >= MAX_LOANS;
+  }
 
-    private void loanBookToMember(Book book,String memderId){
+  private void loanBookToMember(Book book, String memderId) {
 
-        // Assigns the book to the member, sets the due date,
-        // removes the member from the reservation queue, and saves the changes.
+    // Assigns the book to the member, sets the due date,
+    // removes the member from the reservation queue, and saves the changes.
 
-        book.setLoanedTo(memderId);
-        book.setDueDate(LocalDate.now().plusDays(DEFAULT_LOAN_DAYS));
-        book.getReservationQueue().remove(memderId);
-        bookRepository.save(book);
-    }
+    book.setLoanedTo(memderId);
+    book.setDueDate(LocalDate.now().plusDays(DEFAULT_LOAN_DAYS));
+    book.getReservationQueue().remove(memderId);
+    bookRepository.save(book);
+  }
 }
-
-

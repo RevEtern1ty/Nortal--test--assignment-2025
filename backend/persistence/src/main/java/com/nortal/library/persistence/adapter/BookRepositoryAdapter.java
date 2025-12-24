@@ -46,4 +46,3 @@ public class BookRepositoryAdapter implements BookRepository {
     return jpaRepository.countByLoanedTo(memberId);
   }
 }
-
