@@ -93,19 +93,6 @@ public class LibraryService {
     return Result.success();
   }
 
-  public boolean canMemberBorrow(String memberId) {
-    if (!memberRepository.existsById(memberId)) {
-      return false;
-    }
-    int active = 0;
-    for (Book book : bookRepository.findAll()) {
-      if (memberId.equals(book.getLoanedTo())) {
-        active++;
-      }
-    }
-    return active < MAX_LOANS;
-  }
-
   public List<Book> searchBooks(String titleContains, Boolean availableOnly, String loanedTo) {
     return bookRepository.findAll().stream()
         .filter(
@@ -274,6 +261,8 @@ public class LibraryService {
     boolean ok, String reason, List<Book> loans, List<ReservationPosition> reservations) {}
   public record ReservationPosition(String bookId, int position) {}
 
+
+  // 1. borrowBook helpers
     private boolean bookNotFound(String bookId) {
         return bookRepository.findById(bookId).isEmpty();
     }
