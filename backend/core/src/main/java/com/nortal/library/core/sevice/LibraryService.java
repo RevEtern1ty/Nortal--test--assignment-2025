@@ -31,7 +31,7 @@ public class LibraryService {
     if (bookNotFound(bookId)) return Result.failure(BOOK_NOT_FOUND.name());
     if (memberNotFound(memberId)) return Result.failure(MEMBER_NOT_FOUND.name());
 
-    Book book = bookRepository.findById(bookId).get(); // Safe because existence was checked above
+    Book book = getExistingBook(bookId);
 
     // Loan validation
     if (isAlreadyLoaned(book)) return Result.failure(ALREADY_LOANED.name());
@@ -48,7 +48,7 @@ public class LibraryService {
     // Check if the book exists
     if (bookNotFound(bookId)) return ResultWithNext.failure();
 
-    Book book = bookRepository.findById(bookId).get(); // Safe because existence was checked above
+    Book book = getExistingBook(bookId);
 
     // Validate that the book was returned by current borrower
     String currentBorrower = book.getLoanedTo();
@@ -75,7 +75,7 @@ public class LibraryService {
     if (bookNotFound(bookId)) return Result.failure(BOOK_NOT_FOUND.name());
     if (memberNotFound(memberId)) return Result.failure(MEMBER_NOT_FOUND.name());
 
-    Book book = bookRepository.findById(bookId).get(); // Safe because existence was checked above
+    Book book = getExistingBook(bookId);
 
         // Check duplicate reservations
     if (isAlreadyReserved(book,memberId)){
@@ -283,6 +283,12 @@ public class LibraryService {
       boolean ok, String reason, List<Book> loans, List<ReservationPosition> reservations) {}
 
   public record ReservationPosition(String bookId, int position) {}
+
+
+  private Book getExistingBook(String bookId){
+    return bookRepository.findById(bookId)
+            .orElseThrow(() -> new IllegalArgumentException(BOOK_NOT_FOUND.name()));
+  }
 
   // 1. borrowBook helpers
 
