@@ -45,7 +45,7 @@ public class LibraryService {
 
   @Transactional
   public ResultWithNext returnBook(String bookId) {
-    // Check if the book
+    // Check if the book exists
     if (bookNotFound(bookId)) return ResultWithNext.failure();
 
     Book book = bookRepository.findById(bookId).get(); // Safe because existence was checked above
@@ -340,4 +340,8 @@ public class LibraryService {
     }
     return null;
   }
+
+
+
+
 }
