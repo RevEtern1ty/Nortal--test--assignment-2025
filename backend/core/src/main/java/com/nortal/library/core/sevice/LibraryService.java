@@ -71,17 +71,27 @@ public class LibraryService {
 
   @Transactional
   public Result reserveBook(String bookId, String memberId) {
-    Optional<Book> book = bookRepository.findById(bookId);
-    if (book.isEmpty()) {
-      return Result.failure("BOOK_NOT_FOUND");
-    }
-    if (!memberRepository.existsById(memberId)) {
-      return Result.failure("MEMBER_NOT_FOUND");
+        // Check if the book and member exists
+    if (bookNotFound(bookId)) return Result.failure(BOOK_NOT_FOUND.name());
+    if (memberNotFound(memberId)) return Result.failure(MEMBER_NOT_FOUND.name());
+
+    Book book = bookRepository.findById(bookId).get(); // Safe because existence was checked above
+
+        // Check duplicate reservations
+    if (isAlreadyReserved(book,memberId)){
+      return Result.failure(ALREADY_RESERVED.name());
     }
 
-    Book entity = book.get();
-    entity.getReservationQueue().add(memberId);
-    bookRepository.save(entity);
+      // Check if loan for book and member are available
+    if (isAlreadyLoaned(book) && !isQueueViolation(book,memberId)
+            && !hasReachedLoanLimit(memberId)) {
+      loanBookToMember(book,memberId);
+      return Result.success();
+    }
+
+      // Add to reservation queue
+    book.getReservationQueue().add(memberId);
+    bookRepository.save(book);
     return Result.success();
   }
 
@@ -341,6 +351,11 @@ public class LibraryService {
     return null;
   }
 
+  // 3. reserveBook helper method
+
+  private boolean isAlreadyReserved(Book book,String memberId){
+    return book.getReservationQueue().contains(memberId);
+  }
 
 
 
