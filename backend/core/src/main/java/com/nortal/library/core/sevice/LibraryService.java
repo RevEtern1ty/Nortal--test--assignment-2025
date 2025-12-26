@@ -44,22 +44,20 @@ public class LibraryService {
   }
 
   @Transactional
-  public ResultWithNext returnBook(String bookId) {
+  public ResultWithNext returnBook(String bookId, String memberId) {
     // Check if the book exists
     if (bookNotFound(bookId)) return ResultWithNext.failure();
 
     Book book = getExistingBook(bookId);
 
     // Validate that the book was returned by current borrower
-    String currentBorrower = book.getLoanedTo();
-    if (currentBorrower == null || !memberRepository.existsById(currentBorrower)) {
-      return ResultWithNext.failure();
-    }
+    if (memberNotFound(memberId) || !memberId.equals(book.getLoanedTo())) return ResultWithNext.failure();
+
     releaseBookFromMember(book);
 
     // If reservation queue exists, try handing the book to the next valid reserver
     if(hasReservationQueue(book)){
-      String next = nextValidatedReserver(book);
+      String next = nextValidatedReserver(book,memberId);
       if (next != null){
         loanBookToMember(book,next);
         return ResultWithNext.success(next); // return with info on who got the book next
@@ -321,14 +319,14 @@ public class LibraryService {
     return bookRepository.countLoanedTo(memberId) >= MAX_LOANS;
   }
 
-  private void loanBookToMember(Book book, String memderId) {
+  private void loanBookToMember(Book book, String memberId) {
 
     // Assigns the book to the member, sets the due date,
     // removes the member from the reservation queue, and saves the changes.
 
-    book.setLoanedTo(memderId);
+    book.setLoanedTo(memberId);
     book.setDueDate(LocalDate.now().plusDays(DEFAULT_LOAN_DAYS));
-    book.getReservationQueue().remove(memderId);
+    book.getReservationQueue().remove(memberId);
     bookRepository.save(book);
   }
 
@@ -341,17 +339,26 @@ public class LibraryService {
   private boolean hasReservationQueue (Book book){
     return !book.getReservationQueue().isEmpty();
   }
-  private String nextValidatedReserver (Book book){
+  private  String nextValidatedReserver ( Book book, String memberId){
     Iterator<String> iterator = book.getReservationQueue().iterator();
     while (iterator.hasNext()){
       String candidate = iterator.next();
+
+      // Skip if candidate doesn't exist
       if (!memberRepository.existsById(candidate)){
         iterator.remove();
         continue;
       }
+
+      // Skip if candidate reached loan limit
       if (hasReachedLoanLimit(candidate)) continue;
 
-      iterator.remove(); // When reseved -remove from queue
+      // Skip if candidate is the same person returning the book
+      if (candidate.equals(memberId)){
+        continue;
+      }
+
+      iterator.remove(); // When reserved -remove from queue
       return candidate;
     }
     return null;
