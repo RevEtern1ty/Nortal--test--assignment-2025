@@ -55,7 +55,7 @@ class LibraryServiceTest {
 
   @Test
   void shouldFailWhenBookAlreadyLoaned() {
-    book.setLoanedTo("Other");
+    book.setLoanedTo(VALID_USER);
 
     when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
     when(memberRepository.existsById(MEMBER_ID)).thenReturn(true);
@@ -68,7 +68,7 @@ class LibraryServiceTest {
 
   @Test
   void shouldFailWhenMemberNotFound() {
-    when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(new Book(BOOK_ID, ":Title")));
+    when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
     when(memberRepository.existsById(MEMBER_ID)).thenReturn(false);
 
     LibraryService.Result result = libraryService.borrowBook(BOOK_ID, MEMBER_ID);
@@ -144,7 +144,6 @@ class LibraryServiceTest {
 
   @Test
   void shouldFailReturnBookWhenNoCurrentBorrower() {
-    Book book = new Book(BOOK_ID, "Ghost Book");
     book.setLoanedTo(null);
 
     when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
@@ -176,8 +175,63 @@ class LibraryServiceTest {
 
   // reserveBook tests
 
+  @Test
+  void shouldFailOnDuplicateReservation() {
+    book.getReservationQueue().add(MEMBER_ID);
 
+    when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
+    when(memberRepository.existsById(MEMBER_ID)).thenReturn(true);
 
+    LibraryService.Result result = libraryService.reserveBook(BOOK_ID, MEMBER_ID);
 
+    assertFalse(result.ok());
+    assertEquals(ALREADY_RESERVED.name(), result.reason());
+  }
 
+  @Test
+  void shouldLoanIfAvailableAndValid() {
+    book.setLoanedTo(VALID_USER);
+
+    when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
+    when(memberRepository.existsById(MEMBER_ID)).thenReturn(true);
+    when(bookRepository.countLoanedTo(MEMBER_ID)).thenReturn(0);
+
+    LibraryService.Result result = libraryService.reserveBook(BOOK_ID, MEMBER_ID);
+
+    assertTrue(result.ok());
+    assertEquals(MEMBER_ID, book.getLoanedTo());
+    assertNotNull(book.getDueDate());
+    verify(bookRepository).save(book);
+  }
+
+  @Test
+  void shouldAddToQueueIfLoaned() {
+    book.setLoanedTo(VALID_USER);
+
+    when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
+    when(memberRepository.existsById(MEMBER_ID)).thenReturn(true);
+    when(bookRepository.countLoanedTo(MEMBER_ID)).thenReturn(5);
+
+    LibraryService.Result result = libraryService.reserveBook(BOOK_ID, MEMBER_ID);
+
+    assertTrue(result.ok());
+    assertTrue(book.getReservationQueue().contains(MEMBER_ID));
+    verify(bookRepository).save(book);
+  }
+
+  @Test
+  void shouldRejectIfQueueViolationOrLoanLimitExceeded() {
+    book.setLoanedTo(VALID_USER);
+    book.getReservationQueue().add(NEXT_USER);
+
+    when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
+    when(memberRepository.existsById(MEMBER_ID)).thenReturn(true);
+
+    LibraryService.Result result = libraryService.reserveBook(BOOK_ID, MEMBER_ID);
+
+    assertTrue(result.ok());
+    assertTrue(book.getReservationQueue().contains(MEMBER_ID));
+    verify(bookRepository).save(book);
+  }
 }
+
