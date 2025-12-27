@@ -93,14 +93,13 @@ public class LibraryService {
     }
 
       // Check if loan for book and member are available
-    if (isAlreadyLoaned(book) && !isQueueViolation(book,memberId)
-            && !hasReachedLoanLimit(memberId)) {
-      loanBookToMember(book,memberId);
-      return Result.success();
-    }
+     if (isAvailable(book)) {
+       if(isQueueViolation(book, memberId)) return Result.failure(NOT_FIRST_IN_QUEUE.name());
+       if (hasReachedLoanLimit(memberId)) return  Result.failure(BORROW_LIMIT.name());
+     }
 
       // Add to reservation queue
-    book.getReservationQueue().add(memberId);
+    loanBookToMember(book, memberId);
     bookRepository.save(book);
     return Result.success();
   }
@@ -348,12 +347,6 @@ public class LibraryService {
     return !book.getReservationQueue().isEmpty();
   }
 
-  private List<String> consistentQueue (Book book) {
-    if (book.getReservationQueue() == null) {
-      book.setReservationQueue(new java.util.LinkedList<>());
-    }
-    return book.getReservationQueue();
-  }
   private  String nextValidatedReserver ( Book book, String memberId){
     Iterator<String> iterator = book.getReservationQueue().iterator();
     while (iterator.hasNext()){
@@ -385,6 +378,9 @@ public class LibraryService {
     return book.getReservationQueue().contains(memberId);
   }
 
+  private boolean isAvailable(Book book) {
+    return book.getLoanedTo() == null;
+  }
 
 
 }
