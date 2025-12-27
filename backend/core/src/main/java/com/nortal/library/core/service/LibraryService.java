@@ -78,11 +78,14 @@ public class LibraryService {
 
   @Transactional
   public Result reserveBook(String bookId, String memberId) {
+    Optional<Book> bookOptional = bookRepository.findById(bookId);
+
         // Check if the book and member exists
-    if (bookNotFound(bookId)) return Result.failure(BOOK_NOT_FOUND.name());
+
+    if (bookOptional.isEmpty()) return Result.failure(BOOK_NOT_FOUND.name());
     if (memberNotFound(memberId)) return Result.failure(MEMBER_NOT_FOUND.name());
 
-    Book book = getExistingBook(bookId);
+    Book book = bookOptional.get();
 
         // Check duplicate reservations
     if (isAlreadyReserved(book,memberId)){
@@ -292,16 +295,8 @@ public class LibraryService {
   public record ReservationPosition(String bookId, int position) {}
 
 
-  private Book getExistingBook(String bookId){
-    return bookRepository.findById(bookId)
-            .orElseThrow(() -> new IllegalArgumentException(BOOK_NOT_FOUND.name()));
-  }
-
   // 1. borrowBook helpers
 
-  private boolean bookNotFound(String bookId) {
-    return bookRepository.findById(bookId).isEmpty();
-  }
   private boolean memberNotFound(String memberId) {
     return !memberRepository.existsById(memberId);
   }
@@ -351,6 +346,13 @@ public class LibraryService {
 
   private boolean hasReservationQueue (Book book){
     return !book.getReservationQueue().isEmpty();
+  }
+
+  private List<String> consistentQueue (Book book) {
+    if (book.getReservationQueue() == null) {
+      book.setReservationQueue(new java.util.LinkedList<>());
+    }
+    return book.getReservationQueue();
   }
   private  String nextValidatedReserver ( Book book, String memberId){
     Iterator<String> iterator = book.getReservationQueue().iterator();
