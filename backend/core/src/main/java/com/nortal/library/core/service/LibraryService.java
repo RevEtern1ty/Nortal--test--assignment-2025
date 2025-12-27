@@ -352,10 +352,15 @@ public class LibraryService {
       }
 
       // Skip if candidate reached loan limit
-      if (hasReachedLoanLimit(candidate)) continue;
+      if (hasReachedLoanLimit(candidate)){
+        iterator.remove();
+        continue;
+
+      }
 
       // Skip if candidate is the same person returning the book
       if (candidate.equals(memberId)){
+        iterator.remove();
         continue;
       }
 
@@ -376,6 +381,5 @@ public class LibraryService {
   private boolean isAvailable(Book book) {
     return book.getLoanedTo() == null;
   }
-
 
 }
