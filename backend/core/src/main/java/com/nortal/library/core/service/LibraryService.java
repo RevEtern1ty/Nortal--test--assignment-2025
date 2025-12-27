@@ -64,16 +64,10 @@ public class LibraryService {
 
     releaseBookFromMember(book);
 
-    // If reservation queue exists, try handing the book to the next valid reserver
-    if(hasReservationQueue(book)){
-      String next = nextValidatedReserver(book,memberId);
-      if (next != null){
-        loanBookToMember(book,next);
-        return ResultWithNext.success(next); // return with info on who got the book next
-      }
-    }
+    String next = nextValidatedReserver(book,memberId);
+
     bookRepository.save(book);
-    return ResultWithNext.success(null); // success, but no next borrower
+    return ResultWithNext.success(next);
   }
 
   @Transactional
@@ -96,10 +90,13 @@ public class LibraryService {
      if (isAvailable(book)) {
        if(isQueueViolation(book, memberId)) return Result.failure(NOT_FIRST_IN_QUEUE.name());
        if (hasReachedLoanLimit(memberId)) return  Result.failure(BORROW_LIMIT.name());
+
+       loanBookToMember(book, memberId);
+       return Result.success();
      }
 
       // Add to reservation queue
-    loanBookToMember(book, memberId);
+    book.getReservationQueue().add(memberId);
     bookRepository.save(book);
     return Result.success();
   }
@@ -310,7 +307,7 @@ public class LibraryService {
     // Returns true if queue is not empty and also the member is not at the front
 
     List<String> queue = book.getReservationQueue();
-    return !queue.isEmpty() && !queue.getFirst().equals(memberId);
+    return !queue.isEmpty() && !queue.get(0).equals(memberId);
   }
 
   private boolean hasReachedLoanLimit(String memberId) {
@@ -343,10 +340,6 @@ public class LibraryService {
     return book.getLoanedTo() != null && book.getLoanedTo().equals(memberId);
   }
 
-  private boolean hasReservationQueue (Book book){
-    return !book.getReservationQueue().isEmpty();
-  }
-
   private  String nextValidatedReserver ( Book book, String memberId){
     Iterator<String> iterator = book.getReservationQueue().iterator();
     while (iterator.hasNext()){
@@ -366,7 +359,9 @@ public class LibraryService {
         continue;
       }
 
-      iterator.remove(); // When reserved -remove from queue
+      iterator.remove();// When reserved -remove from queue
+      book.setLoanedTo(candidate);
+      book.setDueDate(LocalDate.now().plusDays(DEFAULT_LOAN_DAYS));
       return candidate;
     }
     return null;
