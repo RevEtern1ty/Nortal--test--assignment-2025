@@ -101,7 +101,7 @@ class LibraryServiceTest {
     when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
     when(memberRepository.existsById(MEMBER_ID)).thenReturn(true);
 
-    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID);
+    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID,MEMBER_ID);
 
     assertTrue(result.ok());
     assertNull(result.nextMemberId());
@@ -121,7 +121,7 @@ class LibraryServiceTest {
     when(memberRepository.existsById(NEXT_USER)).thenReturn(true);
     when(bookRepository.countLoanedTo(NEXT_USER)).thenReturn(0);
 
-    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID);
+    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID,MEMBER_ID);
 
     assertTrue(result.ok());
     assertEquals(NEXT_USER, result.nextMemberId());
@@ -135,7 +135,7 @@ class LibraryServiceTest {
   void shouldFailReturnBookWhenBookNotFound() {
     when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.empty());
 
-    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID);
+    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID,MEMBER_ID);
 
     assertFalse(result.ok());
     assertNull(result.nextMemberId());
@@ -148,7 +148,7 @@ class LibraryServiceTest {
 
     when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
 
-    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID);
+    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID,MEMBER_ID);
 
     assertFalse(result.ok());
   }
@@ -166,7 +166,7 @@ class LibraryServiceTest {
     when(memberRepository.existsById(VALID_USER)).thenReturn(true);
     when(bookRepository.countLoanedTo(VALID_USER)).thenReturn(0);
 
-    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID);
+    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID,MEMBER_ID);
 
     assertTrue(result.ok());
     assertEquals(VALID_USER, result.nextMemberId());
