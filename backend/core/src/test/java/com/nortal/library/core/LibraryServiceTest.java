@@ -38,7 +38,6 @@ class LibraryServiceTest {
   @BeforeEach
   void setup(){
     book = new Book(BOOK_ID,":Title");
-    book.setReservationQueue(new LinkedList<>());
   }
 
   // borrowBook Tests
@@ -89,6 +88,31 @@ class LibraryServiceTest {
     verify(bookRepository).save(any(Book.class));
     assertEquals(MEMBER_ID, book.getLoanedTo());
     assertNotNull(book.getDueDate());
+  }
+  @Test
+  void shouldFailBorrowWhenNotFirstInQueue() {
+    book.getReservationQueue().add(NEXT_USER);
+
+    when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
+    when(memberRepository.existsById(MEMBER_ID)).thenReturn(true);
+
+    LibraryService.Result result = libraryService.borrowBook(BOOK_ID, MEMBER_ID);
+
+    assertFalse(result.ok());
+    assertEquals(NOT_FIRST_IN_QUEUE.name(), result.reason());
+    verify(bookRepository, never()).save(any());
+  }
+  @Test
+  void shouldFailReturnBookWhenReturnedByNonBorrower() {
+    book.setLoanedTo(VALID_USER);
+
+    when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
+    when(memberRepository.existsById(MEMBER_ID)).thenReturn(true);
+
+    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID, MEMBER_ID);
+
+    assertFalse(result.ok());
+    verify(bookRepository, never()).save(any());
   }
 
   // returnBook tests
