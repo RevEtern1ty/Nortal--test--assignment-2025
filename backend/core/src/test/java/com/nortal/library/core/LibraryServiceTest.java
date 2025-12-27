@@ -8,10 +8,8 @@ import com.nortal.library.core.domain.Book;
 import com.nortal.library.core.port.BookRepository;
 import com.nortal.library.core.port.MemberRepository;
 import com.nortal.library.core.service.LibraryService;
-
 import java.time.LocalDate;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,8 +33,8 @@ class LibraryServiceTest {
   private static final String VALID_USER = "validUser";
 
   @BeforeEach
-  void setup(){
-    book = new Book(BOOK_ID,":Title");
+  void setup() {
+    book = new Book(BOOK_ID, ":Title");
   }
 
   // borrowBook Tests
@@ -88,6 +86,7 @@ class LibraryServiceTest {
     assertEquals(MEMBER_ID, book.getLoanedTo());
     assertNotNull(book.getDueDate());
   }
+
   @Test
   void shouldFailBorrowWhenNotFirstInQueue() {
     book.getReservationQueue().add(NEXT_USER);
@@ -125,7 +124,7 @@ class LibraryServiceTest {
     when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
     when(memberRepository.existsById(MEMBER_ID)).thenReturn(true);
 
-    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID,MEMBER_ID);
+    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID, MEMBER_ID);
 
     assertTrue(result.ok());
     assertNull(result.nextMemberId());
@@ -145,7 +144,7 @@ class LibraryServiceTest {
     when(memberRepository.existsById(NEXT_USER)).thenReturn(true);
     when(bookRepository.countLoanedTo(NEXT_USER)).thenReturn(0);
 
-    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID,MEMBER_ID);
+    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID, MEMBER_ID);
 
     assertTrue(result.ok());
     assertEquals(NEXT_USER, result.nextMemberId());
@@ -154,17 +153,15 @@ class LibraryServiceTest {
     assertNotNull(book.getDueDate());
   }
 
-
   @Test
   void shouldFailReturnBookWhenBookNotFound() {
     when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.empty());
 
-    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID,MEMBER_ID);
+    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID, MEMBER_ID);
 
     assertFalse(result.ok());
     assertNull(result.nextMemberId());
   }
-
 
   @Test
   void shouldFailReturnBookWhenNoCurrentBorrower() {
@@ -172,11 +169,10 @@ class LibraryServiceTest {
 
     when(bookRepository.findById(BOOK_ID)).thenReturn(Optional.of(book));
 
-    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID,MEMBER_ID);
+    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID, MEMBER_ID);
 
     assertFalse(result.ok());
   }
-
 
   @Test
   void shouldSkipInvalidReserverAndAssignToNext() {
@@ -190,7 +186,7 @@ class LibraryServiceTest {
     when(memberRepository.existsById(VALID_USER)).thenReturn(true);
     when(bookRepository.countLoanedTo(VALID_USER)).thenReturn(0);
 
-    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID,MEMBER_ID);
+    LibraryService.ResultWithNext result = libraryService.returnBook(BOOK_ID, MEMBER_ID);
 
     assertTrue(result.ok());
     assertFalse(book.getReservationQueue().contains("ghost"));
@@ -259,4 +255,3 @@ class LibraryServiceTest {
     verify(bookRepository).save(book);
   }
 }
-

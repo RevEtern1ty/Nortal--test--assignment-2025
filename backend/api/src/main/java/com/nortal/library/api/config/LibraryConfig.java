@@ -1,8 +1,8 @@
 package com.nortal.library.api.config;
 
-import com.nortal.library.core.service.LibraryService;
 import com.nortal.library.core.port.BookRepository;
 import com.nortal.library.core.port.MemberRepository;
+import com.nortal.library.core.service.LibraryService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

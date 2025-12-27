@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -64,7 +63,7 @@ public class LibraryService {
 
     releaseBookFromMember(book);
 
-    String next = nextValidatedReserver(book,memberId);
+    String next = nextValidatedReserver(book, memberId);
 
     bookRepository.save(book);
     return ResultWithNext.success(next);
@@ -74,28 +73,28 @@ public class LibraryService {
   public Result reserveBook(String bookId, String memberId) {
     Optional<Book> bookOptional = bookRepository.findById(bookId);
 
-        // Check if the book and member exists
+    // Check if the book and member exists
 
     if (bookOptional.isEmpty()) return Result.failure(BOOK_NOT_FOUND.name());
     if (memberNotFound(memberId)) return Result.failure(MEMBER_NOT_FOUND.name());
 
     Book book = bookOptional.get();
 
-        // Check duplicate reservations
-    if (isAlreadyReserved(book,memberId)){
+    // Check duplicate reservations
+    if (isAlreadyReserved(book, memberId)) {
       return Result.failure(ALREADY_RESERVED.name());
     }
 
-      // Check if loan for book and member are available
-     if (isAvailable(book)) {
-       if(isQueueViolation(book, memberId)) return Result.failure(NOT_FIRST_IN_QUEUE.name());
-       if (hasReachedLoanLimit(memberId)) return  Result.failure(BORROW_LIMIT.name());
+    // Check if loan for book and member are available
+    if (isAvailable(book)) {
+      if (isQueueViolation(book, memberId)) return Result.failure(NOT_FIRST_IN_QUEUE.name());
+      if (hasReachedLoanLimit(memberId)) return Result.failure(BORROW_LIMIT.name());
 
-       loanBookToMember(book, memberId);
-       return Result.success();
-     }
+      loanBookToMember(book, memberId);
+      return Result.success();
+    }
 
-      // Add to reservation queue
+    // Add to reservation queue
     book.getReservationQueue().add(memberId);
     bookRepository.save(book);
     return Result.success();
@@ -272,8 +271,8 @@ public class LibraryService {
     public static Result failure(String reason) {
       return new Result(false, reason);
     }
-
   }
+
   public record ResultWithNext(boolean ok, String nextMemberId) {
 
     public static ResultWithNext success(String nextMemberId) {
@@ -283,13 +282,12 @@ public class LibraryService {
     public static ResultWithNext failure() {
       return new ResultWithNext(false, null);
     }
-
   }
+
   public record MemberSummary(
       boolean ok, String reason, List<Book> loans, List<ReservationPosition> reservations) {}
 
   public record ReservationPosition(String bookId, int position) {}
-
 
   // 1. borrowBook helpers
 
@@ -332,39 +330,39 @@ public class LibraryService {
 
   // 2. returnBook helper methods
 
-  private void releaseBookFromMember(Book book){
+  private void releaseBookFromMember(Book book) {
     book.setLoanedTo(null);
     book.setDueDate(null);
   }
+
   private boolean isReturnedByCurrentBorrower(Book book, String memberId) {
     return book.getLoanedTo() != null && book.getLoanedTo().equals(memberId);
   }
 
-  private  String nextValidatedReserver ( Book book, String memberId){
+  private String nextValidatedReserver(Book book, String memberId) {
     Iterator<String> iterator = book.getReservationQueue().iterator();
-    while (iterator.hasNext()){
+    while (iterator.hasNext()) {
       String candidate = iterator.next();
 
       // Skip if candidate doesn't exist
-      if (!memberRepository.existsById(candidate)){
+      if (!memberRepository.existsById(candidate)) {
         iterator.remove();
         continue;
       }
 
       // Skip if candidate reached loan limit
-      if (hasReachedLoanLimit(candidate)){
+      if (hasReachedLoanLimit(candidate)) {
         iterator.remove();
         continue;
-
       }
 
       // Skip if candidate is the same person returning the book
-      if (candidate.equals(memberId)){
+      if (candidate.equals(memberId)) {
         iterator.remove();
         continue;
       }
 
-      iterator.remove();// When reserved -remove from queue
+      iterator.remove(); // When reserved -remove from queue
       book.setLoanedTo(candidate);
       book.setDueDate(LocalDate.now().plusDays(DEFAULT_LOAN_DAYS));
       return candidate;
@@ -374,12 +372,11 @@ public class LibraryService {
 
   // 3. reserveBook helper method
 
-  private boolean isAlreadyReserved(Book book,String memberId){
+  private boolean isAlreadyReserved(Book book, String memberId) {
     return book.getReservationQueue().contains(memberId);
   }
 
   private boolean isAvailable(Book book) {
     return book.getLoanedTo() == null;
   }
-
 }

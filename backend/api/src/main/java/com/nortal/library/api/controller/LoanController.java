@@ -9,8 +9,8 @@ import com.nortal.library.api.dto.ReserveRequest;
 import com.nortal.library.api.dto.ResultResponse;
 import com.nortal.library.api.dto.ResultWithNextResponse;
 import com.nortal.library.api.dto.ReturnRequest;
-import com.nortal.library.core.service.LibraryService;
 import com.nortal.library.core.domain.Book;
+import com.nortal.library.core.service.LibraryService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,7 +50,8 @@ public class LoanController {
 
   @PostMapping("/return")
   public ResultWithNextResponse returnBook(@RequestBody @Valid ReturnRequest request) {
-    LibraryService.ResultWithNext result = libraryService.returnBook(request.bookId(), request.memberId());
+    LibraryService.ResultWithNext result =
+        libraryService.returnBook(request.bookId(), request.memberId());
     return new ResultWithNextResponse(result.ok(), result.nextMemberId());
   }
 
