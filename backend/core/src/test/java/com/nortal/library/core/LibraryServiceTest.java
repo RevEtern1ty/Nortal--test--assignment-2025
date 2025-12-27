@@ -10,7 +10,6 @@ import com.nortal.library.core.port.MemberRepository;
 import com.nortal.library.core.service.LibraryService;
 
 import java.time.LocalDate;
-import java.util.LinkedList;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
