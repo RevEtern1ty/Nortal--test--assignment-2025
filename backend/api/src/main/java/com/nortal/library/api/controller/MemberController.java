@@ -7,7 +7,7 @@ import com.nortal.library.api.dto.MemberSummaryResponse;
 import com.nortal.library.api.dto.MembersResponse;
 import com.nortal.library.api.dto.ResultResponse;
 import com.nortal.library.api.dto.UpdateMemberRequest;
-import com.nortal.library.core.sevice.LibraryService;
+import com.nortal.library.core.service.LibraryService;
 import com.nortal.library.core.domain.Member;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;

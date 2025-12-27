@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import com.nortal.library.core.domain.Book;
 import com.nortal.library.core.port.BookRepository;
 import com.nortal.library.core.port.MemberRepository;
-import com.nortal.library.core.sevice.LibraryService;
+import com.nortal.library.core.service.LibraryService;
 
 import java.time.LocalDate;
 import java.util.LinkedList;

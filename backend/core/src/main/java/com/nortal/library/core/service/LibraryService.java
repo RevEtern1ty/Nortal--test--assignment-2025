@@ -1,4 +1,4 @@
-package com.nortal.library.core.sevice;
+package com.nortal.library.core.service;
 
 import static com.nortal.library.core.enums.ErrorReason.*;
 
@@ -27,15 +27,21 @@ public class LibraryService {
 
   @Transactional
   public Result borrowBook(String bookId, String memberId) {
+    Optional<Book> bookOptional = bookRepository.findById(bookId);
+
     // Check if the book and member exists
-    if (bookNotFound(bookId)) return Result.failure(BOOK_NOT_FOUND.name());
+    if (bookOptional.isEmpty()) return Result.failure(BOOK_NOT_FOUND.name());
     if (memberNotFound(memberId)) return Result.failure(MEMBER_NOT_FOUND.name());
 
-    Book book = getExistingBook(bookId);
+    Book book = bookOptional.get();
 
-    // Loan validation
+    // A book already on loan must not be loaned again.
     if (isAlreadyLoaned(book)) return Result.failure(ALREADY_LOANED.name());
+
+    // If a reservation queue exists, only the head of the queue should receive the book.
     if (isQueueViolation(book, memberId)) return Result.failure(NOT_FIRST_IN_QUEUE.name());
+
+    // Borrow-limit enforcement
     if (hasReachedLoanLimit(memberId)) return Result.failure(BORROW_LIMIT.name());
 
     // Assign the book to the member and saves changes
@@ -45,13 +51,16 @@ public class LibraryService {
 
   @Transactional
   public ResultWithNext returnBook(String bookId, String memberId) {
+    Optional<Book> bookOptional = bookRepository.findById(bookId);
+
     // Check if the book exists
-    if (bookNotFound(bookId)) return ResultWithNext.failure();
+    if (bookOptional.isEmpty()) return ResultWithNext.failure();
 
-    Book book = getExistingBook(bookId);
+    Book book = bookOptional.get();
 
-    // Validate that the book was returned by current borrower
-    if (memberNotFound(memberId) || !memberId.equals(book.getLoanedTo())) return ResultWithNext.failure();
+    // Returns should only succeed when initiated by the current borrower.
+    if (memberNotFound(memberId)) return ResultWithNext.failure();
+    if (!isReturnedByCurrentBorrower(book, memberId)) return ResultWithNext.failure();
 
     releaseBookFromMember(book);
 
@@ -336,6 +345,10 @@ public class LibraryService {
     book.setLoanedTo(null);
     book.setDueDate(null);
   }
+  private boolean isReturnedByCurrentBorrower(Book book, String memberId) {
+    return book.getLoanedTo() != null && book.getLoanedTo().equals(memberId);
+  }
+
   private boolean hasReservationQueue (Book book){
     return !book.getReservationQueue().isEmpty();
   }
