@@ -17,7 +17,7 @@ export interface ActionResult {
 }
 
 export class LibraryApiService {
-  constructor(private readonly baseUrl = 'http://localhost:8080/api') {}
+  constructor(private readonly baseUrl = 'http://127.0.0.1:8080/api') {}
 
   async books(): Promise<Book[]> {
     const res = await fetch(`${this.baseUrl}/books`);
@@ -43,8 +43,8 @@ export class LibraryApiService {
     return this.post('/cancel-reservation', { bookId, memberId });
   }
 
-  async returnBook(bookId: string): Promise<ActionResult> {
-    return this.post('/return', { bookId });
+  async returnBook(bookId: string, memberId: string): Promise<ActionResult> {
+    return this.post('/return', { bookId, memberId });
   }
 
   async createBook(id: string, title: string): Promise<ActionResult> {

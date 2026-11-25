@@ -1,8 +1,9 @@
 export const translations = {
   en: {
     title: 'Nortal LEAP 2026 Assignment',
-    subtitle: 'Fix the library service behaviors and keep the app running.',
-    apiOffline: 'Backend API not reachable. Start it with "cd backend && ./gradlew :api:bootRun" then reload.',
+    subtitle: 'Manage loans and reservation queues with a sample library catalog.',
+    apiOffline: 'The library API is offline. Run node tools/run-backend.mjs start from the repository folder, then refresh.',
+    apiOnline: 'API connected',
     apiTitle: 'Try the library API',
     booksTitle: 'Books',
     membersTitle: 'Members',

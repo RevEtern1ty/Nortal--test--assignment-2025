@@ -144,7 +144,7 @@
 .actions {
   display: flex;
   gap: 8px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 button {
@@ -444,13 +444,27 @@ button.danger {
 }
 
 @media (max-width: 640px) {
+  .controls,
+  .status-grid,
+  .grid.two-col,
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .actions {
     flex-direction: column;
+  }
+
+  .actions > button {
+    width: 100%;
+  }
+
+  .line {
     flex-wrap: wrap;
   }
 
-  button {
-    width: 100%;
+  .chip-group {
+    justify-content: flex-start;
   }
 }
 
