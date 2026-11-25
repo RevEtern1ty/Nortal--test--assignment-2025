@@ -32,4 +32,7 @@ const result = spawnSync(gradle, tasks[cmd], {
   shell: true,
 });
 
-process.exit(result.status ?? 0);
+if (result.error) {
+  console.error(result.error.message);
+}
+process.exit(result.status ?? 1);

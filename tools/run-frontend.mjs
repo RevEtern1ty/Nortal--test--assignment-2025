@@ -12,7 +12,7 @@ const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const frontendDir = resolve(root, 'frontend');
 
 const tasks = {
-  install: ['npm', 'install'],
+  install: ['npm', 'ci'],
   start: ['npm', 'start'],
   build: ['npm', 'run', 'build'],
 };
@@ -29,4 +29,7 @@ const result = spawnSync(bin, args, {
   shell: true,
 });
 
-process.exit(result.status ?? 0);
+if (result.error) {
+  console.error(result.error.message);
+}
+process.exit(result.status ?? 1);
